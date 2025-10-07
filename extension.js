@@ -244,11 +244,8 @@ export default class AppMenuIsBackExtension {
     }
 
     enable() {
-        if (!Main.sessionMode.panel.left.includes('appMenu')) {
-            this._app_menu = new AppMenuButton();
-            Main.panel.addToStatusArea('appmenu-indicator', this._app_menu, -1, 'left');
-        }
-
+        this._app_menu = new AppMenuButton();
+        Main.panel.addToStatusArea('appmenu-indicator', this._app_menu, -1, 'left');
         this._shiftPlacesMenu();
     }
 
