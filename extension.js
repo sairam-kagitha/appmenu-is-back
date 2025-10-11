@@ -2,7 +2,6 @@
 //    GNOME Shell extension
 //    @fthx 2025
 
-import GLib from 'gi://GLib';
 import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
@@ -10,25 +9,17 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Animation from 'resource:///org/gnome/shell/ui/animation.js';
-import {AppMenu} from 'resource:///org/gnome/shell/ui/appMenu.js';
+import { AppMenu } from 'resource:///org/gnome/shell/ui/appMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Overview from 'resource:///org/gnome/shell/ui/overview.js';
-import * as PopupMenu from 'resource:///org/gnome/shell/ui//popupMenu.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
 const PANEL_ICON_SIZE = 16;
 const APP_MENU_ICON_MARGIN = 0;
 
-/**
- * AppMenuButton:
- *
- * This class manages the "application menu" component.  It tracks the
- * currently focused application.  However, when an app is launched,
- * this menu also handles startup notification for it.  So when we
- * have an active startup notification, we switch modes to display that.
- */
+// This class is taken from GNOME Shell 48's panel.js .
 const AppMenuButton = GObject.registerClass({
-    Signals: {'changed': {}},
+    Signals: { 'changed': {} },
 }, class AppMenuButton extends PanelMenu.Button {
     _init() {
         super._init(0.0, null, true);
@@ -40,13 +31,13 @@ const AppMenuButton = GObject.registerClass({
         this._menuManager = Main.panel.menuManager;
         this._targetApp = null;
 
-        let bin = new St.Bin({name: 'appMenu'});
+        let bin = new St.Bin({ name: 'appMenu' });
         this.add_child(bin);
 
         this.bind_property('reactive', this, 'can-focus', 0);
         this.reactive = false;
 
-        this._container = new St.BoxLayout({style_class: 'panel-status-menu-box'});
+        this._container = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         bin.set_child(this._container);
 
         let textureCache = St.TextureCache.get_default();
@@ -214,8 +205,8 @@ const AppMenuButton = GObject.registerClass({
             this.fadeOut();
 
         let isBusy = this._targetApp != null &&
-                      (this._targetApp.get_state() === Shell.AppState.STARTING ||
-                       this._targetApp.get_busy());
+            (this._targetApp.get_state() === Shell.AppState.STARTING ||
+                this._targetApp.get_busy());
         if (isBusy)
             this.startAnimation();
         else
@@ -229,37 +220,13 @@ const AppMenuButton = GObject.registerClass({
 });
 
 export default class AppMenuIsBackExtension {
-    _shiftPlacesMenu() {
-        this._timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
-            let placesIndicator = Main.panel.statusArea['places-menu'];
-
-            if (placesIndicator) {
-                Main.panel._leftBox.remove_child(placesIndicator.container);
-                Main.panel._leftBox.insert_child_at_index(placesIndicator.container, 1);
-            }
-
-            this._timeout = null;
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
     enable() {
-        this._app_menu = new AppMenuButton();
-        Main.panel.addToStatusArea('appmenu-indicator', this._app_menu, -1, 'left');
-        this._shiftPlacesMenu();
+        this._appMenuButton = new AppMenuButton();
+        Main.panel.addToStatusArea('appmenu-indicator', this._appMenuButton, -1, 'left');
     }
 
     disable() {
-        Main.panel.menuManager.removeMenu(this._app_menu.menu);
-        this._app_menu.destroy();
-        this._app_menu.menu = null;
-        delete this._app_menu;
-
-        this._shiftPlacesMenu();
-
-        if (this._timeout) {
-            GLib.Source.remove(this._timeout);
-            this._timeout = null;
-        }
+        this._appMenuButton.destroy();
+        delete this._appMenuButton;
     }
 }
