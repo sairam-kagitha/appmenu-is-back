@@ -40,10 +40,6 @@ const AppMenuButton = GObject.registerClass({
         this._container = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         bin.set_child(this._container);
 
-        let textureCache = St.TextureCache.get_default();
-        textureCache.connect('icon-theme-changed',
-            this._onIconThemeChanged.bind(this));
-
         let iconEffect = new Clutter.DesaturateEffect();
         this._iconBox = new St.Bin({
             style_class: 'app-menu-icon',
@@ -121,14 +117,6 @@ const AppMenuButton = GObject.registerClass({
     _syncIcon(app) {
         const icon = app.create_icon_texture(PANEL_ICON_SIZE - APP_MENU_ICON_MARGIN);
         this._iconBox.set_child(icon);
-    }
-
-    _onIconThemeChanged() {
-        if (this._iconBox.child == null)
-            return;
-
-        if (this._targetApp)
-            this._syncIcon(this._targetApp);
     }
 
     stopAnimation() {
@@ -217,16 +205,28 @@ const AppMenuButton = GObject.registerClass({
         this.menu.setApp(this._targetApp);
         this.emit('changed');
     }
+
+    destroy() {
+        this._targetApp?.disconnectObject(this);
+
+        Main.overview.disconnectObject(this);
+        Shell.WindowTracker.get_default().disconnectObject(this);
+        Shell.AppSystem.get_default().disconnectObject(this);
+        global.window_manager.disconnectObject(this);
+
+        super.destroy();
+    }
 });
 
 export default class AppMenuIsBackExtension {
     enable() {
         this._appMenuButton = new AppMenuButton();
-        Main.panel.addToStatusArea('appmenu-indicator', this._appMenuButton, -1, 'left');
+        if (!Main.panel.statusArea['appmenu-indicator'])
+            Main.panel.addToStatusArea('appmenu-indicator', this._appMenuButton, -1, 'left');
     }
 
     disable() {
-        this._appMenuButton.destroy();
-        delete this._appMenuButton;
+        this._appMenuButton?.destroy();
+        this._appMenuButton = null;
     }
 }
