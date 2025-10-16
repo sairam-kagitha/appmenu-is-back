@@ -44,6 +44,7 @@ const AppMenuButton = GObject.registerClass({
         this._iconBox = new St.Bin({
             style_class: 'app-menu-icon',
             y_align: Clutter.ActorAlign.CENTER,
+            style: 'margin-right: 4px;',
         });
         this._iconBox.add_effect(iconEffect);
         this._container.add_child(this._iconBox);
